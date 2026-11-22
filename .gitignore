@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Xcode / build artifacts (il progetto .xcodeproj è generato da XcodeGen)
+*.xcodeproj/
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.moved-aside
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Output locali del tool
+*.json.bak
+privacy_audit_backups/
+report.json
+out.json
