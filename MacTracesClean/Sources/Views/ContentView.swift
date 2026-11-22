@@ -14,10 +14,10 @@ struct ContentView: View {
         NavigationSplitView {
             List(selection: $selection) {
                 Section("MacTracesClean") {
-                    Label("Analisi privacy", systemImage: "magnifyingglass")
+                    Label("Privacy audit", systemImage: "magnifyingglass")
                         .badge(model.totalFindings)
                         .tag(SidebarItem.overview)
-                    Label("Pulizia tracce", systemImage: "sparkles")
+                    Label("Trace cleanup", systemImage: "sparkles")
                         .badge(model.enabledAreas.isEmpty ? 0 : model.enabledAreas.count)
                         .tag(SidebarItem.clean)
                 }
@@ -41,9 +41,9 @@ struct PermissionFooter: View {
             Divider()
             Label("Full Disk Access", systemImage: "lock.shield")
                 .font(.caption.weight(.semibold))
-            Text("Alcune sezioni (Safari, Mail, Messaggi) richiedono il permesso.")
+            Text("Some sections (Safari, Mail, Messages) require this permission.")
                 .font(.caption2).foregroundStyle(.secondary)
-            Button("Apri Impostazioni…") {
+            Button("Open Settings…") {
                 if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
                     NSWorkspace.shared.open(url)
                 }

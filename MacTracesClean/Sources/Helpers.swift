@@ -48,7 +48,7 @@ enum Helpers {
         if v.count <= 8 { return String(v.first!) + "…" }
         let start = v.prefix(4)
         let end = v.suffix(4)
-        return "\(start)…\(end) (\(v.count) caratteri)"
+        return "\(start)…\(end) (\(v.count) characters)"
     }
 
     // MARK: Locked DB copy

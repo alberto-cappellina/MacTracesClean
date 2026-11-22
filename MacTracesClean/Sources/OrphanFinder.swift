@@ -1,8 +1,8 @@
 import Foundation
 
 enum Confidence: String {
-    case alta
-    case bassa
+    case high
+    case low
 }
 
 struct Orphan {
@@ -109,7 +109,7 @@ enum OrphanFinder {
             for entry in Helpers.contents(base) {
                 let ident = entry.lastPathComponent.replacingOccurrences(of: ".savedState", with: "")
                 guard isBundleId(ident), !bundleInstalled(ident, ids) else { continue }
-                results.append(Orphan(path: entry, ident: ident, location: loc, confidence: .alta))
+                results.append(Orphan(path: entry, ident: ident, location: loc, confidence: .high))
             }
         }
 
@@ -119,7 +119,7 @@ enum OrphanFinder {
             for entry in Helpers.contents(prefs) where entry.pathExtension == "plist" {
                 let ident = entry.deletingPathExtension().lastPathComponent
                 guard isBundleId(ident), !bundleInstalled(ident, ids) else { continue }
-                results.append(Orphan(path: entry, ident: ident, location: "Preferences", confidence: .alta))
+                results.append(Orphan(path: entry, ident: ident, location: "Preferences", confidence: .high))
             }
         }
 
@@ -133,10 +133,10 @@ enum OrphanFinder {
                 let conf: Confidence
                 if isBundleId(name) {
                     if bundleInstalled(name, ids) { continue }
-                    conf = .alta
+                    conf = .high
                 } else {
                     if nameKnown(name, names) { continue }
-                    conf = .bassa
+                    conf = .low
                 }
                 results.append(Orphan(path: entry, ident: name, location: loc, confidence: conf))
             }
@@ -144,8 +144,8 @@ enum OrphanFinder {
 
         for i in results.indices { results[i].size = Helpers.pathSize(results[i].path) }
         results.sort { a, b in
-            if (a.confidence == .alta) != (b.confidence == .alta) {
-                return a.confidence == .alta
+            if (a.confidence == .high) != (b.confidence == .high) {
+                return a.confidence == .high
             }
             return a.size > b.size
         }

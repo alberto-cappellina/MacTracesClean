@@ -32,22 +32,22 @@ enum CleanEngine {
     /// Returns (affectedCount, message).
     private static func sqlDelete(_ db: URL, tables: [String], statements: [String],
                                   dryRun: Bool, backup: URL?) -> (Int, String) {
-        guard Helpers.exists(db) else { return (0, "non presente") }
+        guard Helpers.exists(db) else { return (0, "not present") }
         var total = 0
         var readable = false
         for t in tables {
             if let c = SQLiteDB.count(db, table: t) { total += c; readable = true }
         }
-        if !readable { return (0, "non leggibile (serve Full Disk Access o browser chiuso)") }
-        if dryRun { return (total, "\(total) righe verrebbero cancellate (dry-run)") }
+        if !readable { return (0, "not readable (needs Full Disk Access or a closed browser)") }
+        if dryRun { return (total, "\(total) rows would be deleted (dry-run)") }
         Helpers.backupFile(db, into: backup)
         do {
             try SQLiteDB.execute(db, statements)
-            return (total, "\(total) righe cancellate")
+            return (total, "\(total) rows deleted")
         } catch SQLiteError.locked {
-            return (0, "DB bloccato: chiudi il browser e riprova")
+            return (0, "DB locked: close the browser and try again")
         } catch {
-            return (0, "errore: \(error)")
+            return (0, "error: \(error)")
         }
     }
 
@@ -92,7 +92,7 @@ enum CleanEngine {
                 }
             }
         }
-        if r.messages.isEmpty { r.log("nessun browser trovato") }
+        if r.messages.isEmpty { r.log("no browser found") }
         return r
     }
 
@@ -104,7 +104,7 @@ enum CleanEngine {
         for name in [".zsh_history", ".bash_history"] {
             let f = HOME.appendingPathComponent(name)
             guard Helpers.exists(f) else { continue }
-            guard let data = try? Data(contentsOf: f) else { r.log("\(name): non leggibile"); continue }
+            guard let data = try? Data(contentsOf: f) else { r.log("\(name): not readable"); continue }
             let raw = String(decoding: data, as: UTF8.self)
             let lines = raw.components(separatedBy: "\n")
             let newLines: [String]
@@ -117,24 +117,24 @@ enum CleanEngine {
                 toRemove = lines.count - newLines.count
             }
             r.removed += toRemove
-            if dryRun { r.log("\(name): \(toRemove) righe verrebbero rimosse (dry-run)"); continue }
-            if toRemove == 0 { r.log("\(name): nessuna riga da rimuovere"); continue }
+            if dryRun { r.log("\(name): \(toRemove) lines would be removed (dry-run)"); continue }
+            if toRemove == 0 { r.log("\(name): no lines to remove"); continue }
             Helpers.backupFile(f, into: backup)
             do {
                 try newLines.joined(separator: "\n").write(to: f, atomically: true, encoding: .utf8)
-                r.log("\(name): \(toRemove) righe rimosse")
+                r.log("\(name): \(toRemove) lines removed")
             } catch {
-                r.log("\(name): errore in scrittura (\(error))")
+                r.log("\(name): write error (\(error))")
             }
         }
-        if r.messages.isEmpty { r.log("nessun file di cronologia shell trovato") }
+        if r.messages.isEmpty { r.log("no shell history file found") }
         return r
     }
 
     static func quicklookCache(_ dryRun: Bool) -> CleanResult {
         var r = CleanResult(area: .quicklookCache)
         let d = HOME.appendingPathComponent("Library/Caches/com.apple.QuickLook.thumbnailcache")
-        guard Helpers.isDir(d) else { r.log("cache non presente"); return r }
+        guard Helpers.isDir(d) else { r.log("cache not present"); return r }
         var files: [URL] = []
         if let en = FileManager.default.enumerator(at: d, includingPropertiesForKeys: [.isRegularFileKey]) {
             for case let f as URL in en {
@@ -144,10 +144,10 @@ enum CleanEngine {
             }
         }
         r.removed = files.count
-        if dryRun { r.log("\(files.count) file di cache verrebbero rimossi (dry-run)"); return r }
+        if dryRun { r.log("\(files.count) cache files would be removed (dry-run)"); return r }
         var errors = 0
         for f in files { if (try? FileManager.default.removeItem(at: f)) == nil { errors += 1 } }
-        r.log("\(files.count - errors) file rimossi" + (errors > 0 ? ", \(errors) errori" : ""))
+        r.log("\(files.count - errors) files removed" + (errors > 0 ? ", \(errors) errors" : ""))
         return r
     }
 
@@ -156,19 +156,19 @@ enum CleanEngine {
         let days = cfg.downloadsOlderThanDays
         let cutoff = Date().timeIntervalSince1970 - Double(days) * 86400
         let d = HOME.appendingPathComponent("Downloads")
-        guard Helpers.isDir(d) else { r.log("cartella Downloads non trovata"); return r }
+        guard Helpers.isDir(d) else { r.log("Downloads folder not found"); return r }
         let old = Helpers.contents(d).filter {
             $0.lastPathComponent != ".DS_Store" && ScanEngine.mtime($0) < cutoff
         }
         r.removed = old.count
         if dryRun {
-            for p in old.prefix(20) { r.log("→ Cestino: \(p.lastPathComponent) (dry-run)") }
-            r.log("totale: \(old.count) elementi più vecchi di \(days) giorni")
+            for p in old.prefix(20) { r.log("→ Trash: \(p.lastPathComponent) (dry-run)") }
+            r.log("total: \(old.count) items older than \(days) days")
             return r
         }
         var moved = 0
-        for p in old { if Helpers.moveToTrash(p) { moved += 1 } else { r.log("errore su \(p.lastPathComponent)") } }
-        r.log("\(moved) elementi spostati nel Cestino (recuperabili)")
+        for p in old { if Helpers.moveToTrash(p) { moved += 1 } else { r.log("error on \(p.lastPathComponent)") } }
+        r.log("\(moved) items moved to the Trash (recoverable)")
         return r
     }
 
@@ -197,15 +197,15 @@ enum CleanEngine {
             .filter { Helpers.isDir($0) }
             .flatMap { Helpers.contents($0) }
             .filter { $0.lastPathComponent != ".DS_Store" }
-        if children.isEmpty { r.log("niente da pulire"); return r }
+        if children.isEmpty { r.log("nothing to clean"); return r }
         r.removed = children.count
-        let verb = area.permanentDelete ? "Elimina" : "Cestino"
+        let verb = area.permanentDelete ? "Delete" : "Trash"
         if dryRun {
             for c in children.prefix(30) {
                 r.log("→ \(verb): \(c.lastPathComponent) (\(Helpers.humanSize(Helpers.pathSize(c)))) (dry-run)")
             }
-            if children.count > 30 { r.log("… e altri \(children.count - 30)") }
-            r.log("totale: \(children.count) elementi")
+            if children.count > 30 { r.log("… and \(children.count - 30) more") }
+            r.log("total: \(children.count) items")
             return r
         }
         var done = 0
@@ -217,27 +217,27 @@ enum CleanEngine {
             }
         }
         r.log(area.permanentDelete
-              ? "\(done) elementi eliminati definitivamente"
-              : "\(done) elementi spostati nel Cestino (recuperabili)")
+              ? "\(done) items permanently deleted"
+              : "\(done) items moved to the Trash (recoverable)")
         return r
     }
 
     static func orphanAppData(_ dryRun: Bool) -> CleanResult {
         var r = CleanResult(area: .orphanAppData)
-        let orphans = OrphanFinder.find(cap: 1000).filter { $0.confidence == .alta }
-        if orphans.isEmpty { r.log("nessun residuo ad alta confidenza da rimuovere"); return r }
+        let orphans = OrphanFinder.find(cap: 1000).filter { $0.confidence == .high }
+        if orphans.isEmpty { r.log("no high-confidence leftovers to remove"); return r }
         r.removed = orphans.count
         if dryRun {
             for o in orphans.prefix(30) {
-                r.log("→ Cestino: \(o.ident) [\(o.location)] (\(Helpers.humanSize(o.size))) (dry-run)")
+                r.log("→ Trash: \(o.ident) [\(o.location)] (\(Helpers.humanSize(o.size))) (dry-run)")
             }
-            if orphans.count > 30 { r.log("… e altri \(orphans.count - 30)") }
-            r.log("totale: \(orphans.count) residui verrebbero spostati nel Cestino")
+            if orphans.count > 30 { r.log("… and \(orphans.count - 30) more") }
+            r.log("total: \(orphans.count) leftovers would be moved to the Trash")
             return r
         }
         var moved = 0
-        for o in orphans { if Helpers.moveToTrash(o.path) { moved += 1 } else { r.log("errore su \(o.ident)") } }
-        r.log("\(moved) residui spostati nel Cestino (recuperabili)")
+        for o in orphans { if Helpers.moveToTrash(o.path) { moved += 1 } else { r.log("error on \(o.ident)") } }
+        r.log("\(moved) leftovers moved to the Trash (recoverable)")
         return r
     }
 }

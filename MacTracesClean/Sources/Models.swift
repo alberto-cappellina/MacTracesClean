@@ -3,29 +3,29 @@ import SwiftUI
 // MARK: - Sensitivity
 
 enum Sensitivity: String, Codable, Hashable {
-    case alta, media, bassa
+    case high, medium, low
 
     var color: Color {
         switch self {
-        case .alta:  return Color(red: 0.90, green: 0.26, blue: 0.24)
-        case .media: return Color(red: 0.95, green: 0.60, blue: 0.14)
-        case .bassa: return Color(red: 0.92, green: 0.80, blue: 0.20)
+        case .high:   return Color(red: 0.90, green: 0.26, blue: 0.24)
+        case .medium: return Color(red: 0.95, green: 0.60, blue: 0.14)
+        case .low:    return Color(red: 0.92, green: 0.80, blue: 0.20)
         }
     }
 
     var label: String {
         switch self {
-        case .alta:  return "Alta"
-        case .media: return "Media"
-        case .bassa: return "Bassa"
+        case .high:   return "High"
+        case .medium: return "Medium"
+        case .low:    return "Low"
         }
     }
 
     var rank: Int {
         switch self {
-        case .alta:  return 0
-        case .media: return 1
-        case .bassa: return 2
+        case .high:   return 0
+        case .medium: return 1
+        case .low:    return 2
         }
     }
 }
@@ -45,14 +45,14 @@ enum ScanCleanAction: Hashable {
 
     var title: String {
         switch self {
-        case .browser(let t): return "cronologia \(t.capitalized)"
-        case .shell:          return "cronologia shell"
+        case .browser(let t): return "\(t.capitalized) history"
+        case .shell:          return "shell history"
         }
     }
     var confirmMessage: String {
         switch self {
-        case .browser: return "La cronologia verrà cancellata in modo definitivo (chiudi prima il browser)."
-        case .shell:   return "Le righe della cronologia shell verranno rimosse. Se attivo, viene creato un backup."
+        case .browser: return "The history will be permanently deleted (close the browser first)."
+        case .shell:   return "The shell history lines will be removed. A backup is created if enabled."
         }
     }
 }
@@ -74,8 +74,8 @@ struct ScanSection: Identifiable {
     /// True when the error text hints at a Full Disk Access permission issue.
     var looksLikePermission: Bool {
         let e = error.lowercased()
-        return e.contains("full disk") || e.contains("permess") || e.contains("negato")
-            || e.contains("leggere il db")
+        return e.contains("full disk") || e.contains("permission") || e.contains("denied")
+            || e.contains("can't read") || e.contains("cannot read") || e.contains("not readable")
     }
 }
 
@@ -87,7 +87,7 @@ enum CleanArea: String, CaseIterable, Identifiable, Hashable {
     case quicklookCache
     case downloadsOld
     case orphanAppData
-    // Aree in stile CleanMyMac (basate su directory)
+    // CleanMyMac-style areas (directory-based)
     case userCaches
     case appLogs
     case xcodeJunk
@@ -100,35 +100,35 @@ enum CleanArea: String, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .browserHistory: return "Cronologia browser"
-        case .shellHistory:   return "Cronologia shell"
-        case .quicklookCache: return "Cache Quick Look"
-        case .downloadsOld:   return "Download vecchi"
-        case .orphanAppData:  return "Residui di app disinstallate"
-        case .userCaches:     return "Cache utente"
-        case .appLogs:        return "Log applicazioni"
-        case .xcodeJunk:      return "Residui di sviluppo (Xcode)"
-        case .devCaches:      return "Cache sviluppo (npm, Gradle, pip…)"
-        case .iosBackups:     return "Backup iOS e aggiornamenti"
-        case .mailAttachments: return "Allegati Mail"
-        case .trashBins:      return "Cestino"
+        case .browserHistory: return "Browser history"
+        case .shellHistory:   return "Shell history"
+        case .quicklookCache: return "Quick Look cache"
+        case .downloadsOld:   return "Old downloads"
+        case .orphanAppData:  return "Leftovers of uninstalled apps"
+        case .userCaches:     return "User caches"
+        case .appLogs:        return "Application logs"
+        case .xcodeJunk:      return "Developer leftovers (Xcode)"
+        case .devCaches:      return "Developer caches (npm, Gradle, pip…)"
+        case .iosBackups:     return "iOS backups and updates"
+        case .mailAttachments: return "Mail attachments"
+        case .trashBins:      return "Trash"
         }
     }
 
     var desc: String {
         switch self {
-        case .browserHistory: return "Cancella la cronologia di navigazione (richiede il browser chiuso)."
-        case .shellHistory:   return "Pulisce ~/.zsh_history e ~/.bash_history."
-        case .quicklookCache: return "Svuota la cache delle anteprime Quick Look (si rigenera da sola)."
-        case .downloadsOld:   return "Sposta nel Cestino i download più vecchi di N giorni (recuperabili)."
-        case .orphanAppData:  return "Sposta nel Cestino i residui di app disinstallate (solo ad alta confidenza)."
-        case .userCaches:     return "Svuota ~/Library/Caches: cache delle app (si rigenerano da sole)."
-        case .appLogs:        return "Rimuove i log delle applicazioni in ~/Library/Logs."
-        case .xcodeJunk:      return "DerivedData, archivi, Device Support e cache dei simulatori Xcode."
-        case .devCaches:      return "Cache dei package manager (~/.npm, ~/.gradle, ~/.cache, ~/.pub-cache, ~/.m2, ~/.cargo). Si ricostruiscono alla build successiva."
-        case .iosBackups:     return "Backup iOS/iPadOS e aggiornamenti software salvati (spesso molti GB)."
-        case .mailAttachments: return "Allegati scaricati da Mail (~/Library/Containers/com.apple.mail…)."
-        case .trashBins:      return "Svuota il Cestino, inclusi i cestini dei volumi (eliminazione definitiva)."
+        case .browserHistory: return "Clears browsing history (requires the browser to be closed)."
+        case .shellHistory:   return "Cleans ~/.zsh_history and ~/.bash_history."
+        case .quicklookCache: return "Empties the Quick Look thumbnail cache (it rebuilds itself)."
+        case .downloadsOld:   return "Moves downloads older than N days to the Trash (recoverable)."
+        case .orphanAppData:  return "Moves leftovers of uninstalled apps to the Trash (high-confidence only)."
+        case .userCaches:     return "Empties ~/Library/Caches: app caches (they rebuild themselves)."
+        case .appLogs:        return "Removes application logs in ~/Library/Logs."
+        case .xcodeJunk:      return "DerivedData, archives, Device Support and Xcode simulator caches."
+        case .devCaches:      return "Package manager caches (~/.npm, ~/.gradle, ~/.cache, ~/.pub-cache, ~/.m2, ~/.cargo). They are rebuilt on the next build."
+        case .iosBackups:     return "Saved iOS/iPadOS backups and software updates (often many GB)."
+        case .mailAttachments: return "Attachments downloaded by Mail (~/Library/Containers/com.apple.mail…)."
+        case .trashBins:      return "Empties the Trash, including per-volume trashes (permanent deletion)."
         }
     }
 
@@ -195,17 +195,17 @@ enum CleanArea: String, CaseIterable, Identifiable, Hashable {
     var confirmMessage: String {
         switch self {
         case .browserHistory:
-            return "La cronologia dei browser selezionati verrà cancellata in modo definitivo (chiudi prima i browser)."
+            return "The history of the selected browsers will be permanently deleted (close the browsers first)."
         case .shellHistory:
-            return "Le righe della cronologia shell verranno rimosse. Se attivo, viene creato un backup."
+            return "The shell history lines will be removed. A backup is created if enabled."
         case .trashBins:
-            return "Il contenuto del Cestino verrà eliminato in modo DEFINITIVO e non sarà recuperabile."
+            return "The contents of the Trash will be PERMANENTLY deleted and cannot be recovered."
         default:
-            return "Gli elementi verranno spostati nel Cestino (recuperabili)."
+            return "The items will be moved to the Trash (recoverable)."
         }
     }
 
-    /// Space-reclaim areas shown on the Analisi page, roughly largest first.
+    /// Space-reclaim areas shown on the Overview page, roughly largest first.
     static let spaceAreas: [CleanArea] = [
         .devCaches, .userCaches, .xcodeJunk, .iosBackups, .appLogs,
         .mailAttachments, .quicklookCache, .downloadsOld, .orphanAppData, .trashBins,
@@ -218,8 +218,8 @@ enum ShellMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .secretsOnly: return "Solo righe con segreti"
-        case .all:         return "Tutta la cronologia"
+        case .secretsOnly: return "Only lines with secrets"
+        case .all:         return "The entire history"
         }
     }
 }

@@ -40,15 +40,15 @@ struct ScanView: View {
             .frame(maxWidth: .infinity)
         }
         .background(.background)
-        .navigationTitle("Analisi privacy")
+        .navigationTitle("Privacy audit")
         .sheet(item: $inventoryArea) { area in
             InventorySheet(area: area)
         }
-        .alert("Pulire “\(pending?.title ?? "")” adesso?",
+        .alert("Clean “\(pending?.title ?? "")” now?",
                isPresented: Binding(get: { pending != nil },
                                     set: { if !$0 { pending = nil } }),
                presenting: pending) { p in
-            Button("Annulla", role: .cancel) { pending = nil }
+            Button("Cancel", role: .cancel) { pending = nil }
             Button(p.destructiveLabel, role: .destructive) {
                 p.run(); pending = nil
             }
@@ -60,7 +60,7 @@ struct ScanView: View {
     private var spaceReclaimSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Spazio recuperabile").font(.title3.weight(.bold))
+                Text("Reclaimable space").font(.title3.weight(.bold))
                 Spacer()
                 if model.isCleaning { ProgressView().controlSize(.small) }
                 let total = model.areaSizes.values.reduce(Int64(0), +)
@@ -70,7 +70,7 @@ struct ScanView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            Text("Pulizia in stile CleanMyMac. La dimensione viene calcolata al volo; i file vanno nel Cestino (il Cestino stesso viene svuotato in modo definitivo).")
+            Text("CleanMyMac-style cleanup. Sizes are computed on the fly; files go to the Trash (the Trash itself is emptied permanently).")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -86,12 +86,12 @@ struct ScanView: View {
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Cosa è esposto sul tuo Mac")
+                Text("What is exposed on your Mac")
                     .font(.title2.weight(.bold))
-                Text("Scansione in sola lettura. Nessun dato lascia il computer.")
+                Text("Read-only scan. No data leaves the computer.")
                     .font(.subheadline).foregroundStyle(.secondary)
                 if let d = model.lastScan {
-                    Text("Ultima analisi: \(d.formatted(date: .abbreviated, time: .shortened))")
+                    Text("Last scan: \(d.formatted(date: .abbreviated, time: .shortened))")
                         .font(.caption).foregroundStyle(.tertiary)
                 }
             }
@@ -105,7 +105,7 @@ struct ScanView: View {
                     } else {
                         Image(systemName: "magnifyingglass")
                     }
-                    Text(model.isScanning ? "Analisi…" : "Scansiona")
+                    Text(model.isScanning ? "Scanning…" : "Scan")
                 }
                 .frame(minWidth: 108)
             }
@@ -117,10 +117,10 @@ struct ScanView: View {
 
     private var statsRow: some View {
         HStack(spacing: 12) {
-            StatTile(value: "\(model.totalFindings)", label: "Elementi rilevati")
-            StatTile(value: "\(model.highCount)", label: "Categorie ad alta sensibilità",
-                     tint: Sensitivity.alta.color)
-            StatTile(value: "\(model.sections.count)", label: "Categorie analizzate",
+            StatTile(value: "\(model.totalFindings)", label: "Items found")
+            StatTile(value: "\(model.highCount)", label: "High-sensitivity categories",
+                     tint: Sensitivity.high.color)
+            StatTile(value: "\(model.sections.count)", label: "Categories analyzed",
                      tint: .secondary)
         }
     }
@@ -129,13 +129,13 @@ struct ScanView: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "lock.shield.fill").foregroundStyle(.orange)
             VStack(alignment: .leading, spacing: 3) {
-                Text("Alcune sezioni sono vuote per mancanza di permessi")
+                Text("Some sections are empty due to missing permissions")
                     .font(.subheadline.weight(.semibold))
-                Text("Aggiungi MacTracesClean a Impostazioni di Sistema › Privacy e sicurezza › Accesso completo al disco, poi riavvia l'app e riprova.")
+                Text("Add MacTracesClean under System Settings › Privacy & Security › Full Disk Access, then relaunch the app and try again.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            Button("Apri") {
+            Button("Open") {
                 if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
                     NSWorkspace.shared.open(url)
                 }
@@ -149,9 +149,9 @@ struct ScanView: View {
         VStack(spacing: 12) {
             Image(systemName: "shield.lefthalf.filled")
                 .font(.system(size: 46)).foregroundStyle(.secondary)
-            Text("Premi “Scansiona” per analizzare il tuo Mac")
+            Text("Press “Scan” to analyze your Mac")
                 .font(.headline)
-            Text("MacTracesClean elenca cronologie, credenziali in chiaro, reti Wi-Fi salvate e residui di app disinstallate.")
+            Text("MacTracesClean lists histories, plaintext credentials, saved Wi-Fi networks and leftovers of uninstalled apps.")
                 .font(.subheadline).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 420)
@@ -187,13 +187,13 @@ struct SectionCard: View {
                     Label(section.error, systemImage: section.looksLikePermission ? "lock" : "info.circle")
                         .font(.caption).foregroundStyle(.secondary)
                 } else if section.items.isEmpty {
-                    Text("Nessun elemento.").font(.caption).foregroundStyle(.secondary)
+                    Text("No items.").font(.caption).foregroundStyle(.secondary)
                 } else {
                     Button {
                         withAnimation(.easeInOut(duration: 0.18)) { expanded.toggle() }
                     } label: {
                         HStack {
-                            Text("\(section.items.count) elementi")
+                            Text("\(section.items.count) items")
                                 .font(.subheadline.weight(.medium))
                             Spacer()
                             Image(systemName: "chevron.right")
@@ -232,11 +232,11 @@ struct SectionCard: View {
                 pending = PendingClean(
                     title: action.title,
                     message: action.confirmMessage,
-                    destructiveLabel: "Pulisci") {
+                    destructiveLabel: "Clean") {
                         Task { await model.cleanScan(action) }
                     }
             } label: {
-                Label("Pulisci ora", systemImage: "trash")
+                Label("Clean now", systemImage: "trash")
             }
             .tint(.red)
             .controlSize(.small)
@@ -278,17 +278,17 @@ struct CleanSpaceCard: View {
 
                 HStack(spacing: 10) {
                     Button { inventoryArea = area } label: {
-                        Label("Inventario", systemImage: "list.bullet.rectangle")
+                        Label("Inventory", systemImage: "list.bullet.rectangle")
                     }
                     Button {
                         pending = PendingClean(
                             title: area.title,
                             message: area.confirmMessage,
-                            destructiveLabel: area.permanentDelete ? "Elimina" : "Pulisci") {
+                            destructiveLabel: area.permanentDelete ? "Delete" : "Clean") {
                                 Task { await model.cleanSingle(area) }
                             }
                     } label: {
-                        Label("Pulisci ora", systemImage: "trash")
+                        Label("Clean now", systemImage: "trash")
                     }
                     .tint(.red)
                     .disabled(model.isCleaning)

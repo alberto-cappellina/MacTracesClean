@@ -31,34 +31,34 @@ struct CleanView: View {
             .frame(maxWidth: .infinity)
         }
         .background(.background)
-        .navigationTitle("Pulizia tracce")
+        .navigationTitle("Trace cleanup")
         .sheet(item: $inventoryArea) { area in
             InventorySheet(area: area)
         }
-        .alert("Pulire “\(pendingClean?.title ?? "")” adesso?",
+        .alert("Clean “\(pendingClean?.title ?? "")” now?",
                isPresented: Binding(get: { pendingClean != nil },
                                     set: { if !$0 { pendingClean = nil } }),
                presenting: pendingClean) { area in
-            Button("Annulla", role: .cancel) { pendingClean = nil }
-            Button("Pulisci", role: .destructive) {
+            Button("Cancel", role: .cancel) { pendingClean = nil }
+            Button("Clean", role: .destructive) {
                 let a = area; pendingClean = nil
                 Task { await model.cleanSingle(a) }
             }
         } message: { area in
             Text(area.confirmMessage)
         }
-        .alert("Eseguire la pulizia delle aree attive?", isPresented: $showApplyConfirm) {
-            Button("Annulla", role: .cancel) { }
-            Button("Esegui", role: .destructive) { Task { await model.clean(apply: true) } }
+        .alert("Run cleanup for the enabled areas?", isPresented: $showApplyConfirm) {
+            Button("Cancel", role: .cancel) { }
+            Button("Run", role: .destructive) { Task { await model.clean(apply: true) } }
         } message: {
-            Text("Le operazioni modificano o rimuovono dati. I file vengono spostati nel Cestino (recuperabili) e, se attivo, viene creato un backup. Le cronologie dei browser vengono invece cancellate in modo definitivo.")
+            Text("These operations modify or remove data. Files are moved to the Trash (recoverable) and, if enabled, a backup is created. Browser histories, however, are permanently deleted.")
         }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Pulizia tracce").font(.title2.weight(.bold))
-            Text("Agisci su una singola sezione con “Pulisci adesso”, o usa i toggle per una pulizia in blocco. “Inventario” mostra esattamente quali file verrebbero toccati.")
+            Text("Trace cleanup").font(.title2.weight(.bold))
+            Text("Act on a single section with “Clean now”, or use the toggles for a batch cleanup. “Inventory” shows exactly which files would be touched.")
                 .font(.subheadline).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -67,7 +67,7 @@ struct CleanView: View {
     private var safetyBanner: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "checkmark.shield.fill").foregroundStyle(.green)
-            Text("Sicuro di default: le credenziali non vengono mai toccate e, dove possibile, i file finiscono nel Cestino.")
+            Text("Safe by default: credentials are never touched and, where possible, files go to the Trash.")
                 .font(.caption).foregroundStyle(.secondary)
             Spacer()
         }
@@ -79,8 +79,8 @@ struct CleanView: View {
         Card {
             Toggle(isOn: $model.backup) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Crea un backup prima di modificare").font(.subheadline.weight(.medium))
-                    Text("Copia i file in ~/MacTracesClean_backups prima dell'esecuzione reale.")
+                    Text("Create a backup before modifying").font(.subheadline.weight(.medium))
+                    Text("Copies the files to ~/MacTracesClean_backups before the real run.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
@@ -90,19 +90,19 @@ struct CleanView: View {
 
     private var batchActionBar: some View {
         HStack(spacing: 12) {
-            Text("Pulizia in blocco delle aree attivate:")
+            Text("Batch cleanup of the enabled areas:")
                 .font(.caption).foregroundStyle(.secondary)
             Button {
                 Task { await model.clean(apply: false) }
             } label: {
-                Label("Anteprima", systemImage: "eye")
+                Label("Preview", systemImage: "eye")
             }
             .disabled(model.enabledAreas.isEmpty || model.isCleaning)
 
             Button {
                 showApplyConfirm = true
             } label: {
-                Label("Esegui tutte", systemImage: "trash")
+                Label("Run all", systemImage: "trash")
             }
             .buttonStyle(.borderedProminent).tint(.red)
             .disabled(model.enabledAreas.isEmpty || model.isCleaning)
@@ -118,7 +118,7 @@ struct CleanView: View {
                 HStack {
                     Image(systemName: model.lastCleanWasApply ? "checkmark.circle.fill" : "eye.circle.fill")
                         .foregroundStyle(model.lastCleanWasApply ? .green : .blue)
-                    Text(model.lastCleanWasApply ? "Pulizia eseguita" : "Anteprima (nessuna modifica)")
+                    Text(model.lastCleanWasApply ? "Cleanup done" : "Preview (no changes)")
                         .font(.headline)
                 }
                 ForEach(model.cleanResults) { res in
@@ -136,8 +136,8 @@ struct CleanView: View {
                 }
                 let total = model.cleanResults.reduce(0) { $0 + $1.removed }
                 Text(model.lastCleanWasApply
-                     ? "Totale: \(total) elementi elaborati."
-                     : "Dry-run: \(total) elementi verrebbero rimossi.")
+                     ? "Total: \(total) items processed."
+                     : "Dry-run: \(total) items would be removed.")
                     .font(.footnote.weight(.medium))
             }
         }
@@ -163,7 +163,7 @@ struct CleanAreaRow: View {
                     Spacer()
                     Toggle("", isOn: model.binding(for: area))
                         .toggleStyle(.switch).labelsHidden()
-                        .help("Includi nella pulizia in blocco")
+                        .help("Include in the batch cleanup")
                 }
 
                 options
@@ -172,12 +172,12 @@ struct CleanAreaRow: View {
                     Button {
                         inventoryArea = area
                     } label: {
-                        Label("Inventario", systemImage: "list.bullet.rectangle")
+                        Label("Inventory", systemImage: "list.bullet.rectangle")
                     }
                     Button {
                         pendingClean = area
                     } label: {
-                        Label("Pulisci adesso", systemImage: "trash")
+                        Label("Clean now", systemImage: "trash")
                     }
                     .tint(.red)
                     .disabled(model.isCleaning)
@@ -198,14 +198,14 @@ struct CleanAreaRow: View {
             }
             .toggleStyle(.checkbox).font(.caption)
         case .shellHistory:
-            Picker("Modalità", selection: $model.shellMode) {
+            Picker("Mode", selection: $model.shellMode) {
                 ForEach(ShellMode.allCases) { Text($0.label).tag($0) }
             }
             .pickerStyle(.radioGroup).font(.caption)
         case .downloadsOld:
             HStack {
-                Text("Più vecchi di").font(.caption)
-                Stepper("\(Int(model.downloadsDays)) giorni", value: $model.downloadsDays,
+                Text("Older than").font(.caption)
+                Stepper("\(Int(model.downloadsDays)) days", value: $model.downloadsDays,
                         in: 7...365, step: 7)
                     .font(.caption)
             }
@@ -229,24 +229,24 @@ struct InventorySheet: View {
         VStack(spacing: 0) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Inventario — \(area.title)").font(.headline)
-                    Text("File interessati, ordinati per percorso assoluto.")
+                    Text("Inventory — \(area.title)").font(.headline)
+                    Text("Affected files, sorted by absolute path.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("Chiudi") { dismiss() }
+                Button("Close") { dismiss() }
                     .keyboardShortcut(.cancelAction)
             }
             .padding(16)
             Divider()
 
             if loading {
-                VStack { ProgressView("Analisi in corso…") }
+                VStack { ProgressView("Scanning…") }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if items.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "tray").font(.system(size: 34)).foregroundStyle(.secondary)
-                    Text("Nessun file da mostrare per questa sezione.")
+                    Text("No files to show for this section.")
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -259,14 +259,14 @@ struct InventorySheet: View {
 
             Divider()
             HStack {
-                Text("\(items.count) elementi · \(Helpers.humanSize(totalSize))")
+                Text("\(items.count) items · \(Helpers.humanSize(totalSize))")
                     .font(.caption).foregroundStyle(.secondary)
                 Spacer()
                 if !items.isEmpty {
                     Button {
                         pendingAndClean()
                     } label: {
-                        Label("Pulisci questa sezione", systemImage: "trash")
+                        Label("Clean this section", systemImage: "trash")
                     }
                     .tint(.red)
                     .controlSize(.small)
@@ -316,7 +316,7 @@ struct InventoryRow: View {
                 Image(systemName: "magnifyingglass")
             }
             .buttonStyle(.borderless)
-            .help("Mostra nel Finder")
+            .help("Show in Finder")
         }
         .padding(.vertical, 2)
     }

@@ -48,17 +48,17 @@ enum ScanEngine {
     // MARK: Browsers
 
     static func safariHistory(_ limit: Int) -> ScanSection {
-        var s = ScanSection(title: "Cronologia Safari (siti visitati)",
-                            sensitivity: .alta, icon: "safari",
-                            note: "Elenco degli ultimi URL visitati in Safari.")
+        var s = ScanSection(title: "Safari history (visited sites)",
+                            sensitivity: .high, icon: "safari",
+                            note: "The most recent URLs visited in Safari.")
         let db = HOME.appendingPathComponent("Library/Safari/History.db")
         guard Helpers.exists(db) else {
-            s.error = "Safari non in uso o percorso non accessibile."
+            s.error = "Safari not in use or path not accessible."
             return s
         }
         s.cleanAction = .browser("safari")
         guard let copy = Helpers.copyLockedDB(db) else {
-            s.error = "Impossibile leggere il DB (serve Full Disk Access?)."
+            s.error = "Can't read the DB (needs Full Disk Access?)."
             return s
         }
         defer { Helpers.cleanupTemp(copy) }
@@ -73,14 +73,14 @@ enum ScanEngine {
             let when = r[2].double.map { Helpers.appleTime($0) } ?? ""
             s.add(url, "\(title) \(when)".trimmingCharacters(in: .whitespaces))
         }
-        if rows.isEmpty { s.error = "Nessun dato (o permessi insufficienti)." }
+        if rows.isEmpty { s.error = "No data (or insufficient permissions)." }
         return s
     }
 
     static func chromiumHistory(_ limit: Int) -> ScanSection {
-        var s = ScanSection(title: "Cronologia browser Chromium (Chrome/Edge/Brave/Arc/Opera)",
-                            sensitivity: .alta, icon: "globe",
-                            note: "Siti visitati nei browser basati su Chromium.")
+        var s = ScanSection(title: "Chromium browser history (Chrome/Edge/Brave/Arc/Opera)",
+                            sensitivity: .high, icon: "globe",
+                            note: "Sites visited in Chromium-based browsers.")
         s.cleanAction = .browser("chromium")
         for base in BrowserPaths.chromiumBases {
             let root = HOME.appendingPathComponent(base.rel)
@@ -101,16 +101,16 @@ enum ScanEngine {
                 }
             }
         }
-        if s.items.isEmpty { s.error = "Nessun browser Chromium trovato o dati non leggibili." }
+        if s.items.isEmpty { s.error = "No Chromium browser found or data not readable." }
         return s
     }
 
     static func firefoxHistory(_ limit: Int) -> ScanSection {
-        var s = ScanSection(title: "Cronologia Firefox", sensitivity: .alta,
-                            icon: "flame", note: "Siti visitati in Firefox.")
+        var s = ScanSection(title: "Firefox history", sensitivity: .high,
+                            icon: "flame", note: "Sites visited in Firefox.")
         s.cleanAction = .browser("firefox")
         let base = HOME.appendingPathComponent("Library/Application Support/Firefox/Profiles")
-        guard Helpers.isDir(base) else { s.error = "Firefox non installato."; return s }
+        guard Helpers.isDir(base) else { s.error = "Firefox not installed."; return s }
         for profile in Helpers.contents(base) where Helpers.isDir(profile) {
             let places = profile.appendingPathComponent("places.sqlite")
             guard Helpers.exists(places), let copy = Helpers.copyLockedDB(places) else { continue }
@@ -127,16 +127,16 @@ enum ScanEngine {
                 s.add(url, "\(title) \(when)".trimmingCharacters(in: .whitespaces))
             }
         }
-        if s.items.isEmpty && s.error.isEmpty { s.error = "Nessun dato leggibile." }
+        if s.items.isEmpty && s.error.isEmpty { s.error = "No readable data." }
         return s
     }
 
     // MARK: Shell
 
     static func shellHistory(_ limit: Int) -> ScanSection {
-        var s = ScanSection(title: "Cronologia della shell (comandi digitati)",
-                            sensitivity: .alta, icon: "terminal",
-                            note: "I comandi possono contenere password, token o percorsi privati.")
+        var s = ScanSection(title: "Shell history (typed commands)",
+                            sensitivity: .high, icon: "terminal",
+                            note: "Commands may contain passwords, tokens or private paths.")
         s.cleanAction = .shell
         let files = [
             HOME.appendingPathComponent(".zsh_history"),
@@ -152,32 +152,32 @@ enum ScanEngine {
             let raw = String(decoding: data, as: UTF8.self)
             let lines = raw.components(separatedBy: .newlines)
             let flagged = lines.filter { matches(secretRe, $0) }
-            s.add("\(f.lastPathComponent): \(lines.count) righe, \(flagged.count) potenzialmente sensibili",
+            s.add("\(f.lastPathComponent): \(lines.count) lines, \(flagged.count) potentially sensitive",
                   f.path)
             for ln in flagged.suffix(limit) {
                 let clean = replace(tsRe, in: ln, with: "").trimmingCharacters(in: .whitespaces)
                 s.add("⚠︎ " + String(clean.prefix(200)))
             }
         }
-        if s.items.isEmpty { s.error = "Nessun file di cronologia shell trovato." }
+        if s.items.isEmpty { s.error = "No shell history file found." }
         return s
     }
 
     // MARK: Recent documents
 
     static func recentDocuments(_ limit: Int) -> ScanSection {
-        var s = ScanSection(title: "Documenti aperti di recente", sensitivity: .media,
-                            icon: "doc.text", note: "File recenti registrati dalle app e dal sistema.")
+        var s = ScanSection(title: "Recently opened documents", sensitivity: .medium,
+                            icon: "doc.text", note: "Recent files recorded by apps and the system.")
         var count = 0
         let recentItems = HOME.appendingPathComponent("Library/Preferences/com.apple.recentitems.plist")
         if Helpers.exists(recentItems) {
-            s.add("Elenco presente: \(recentItems.lastPathComponent)", recentItems.path)
+            s.add("List present: \(recentItems.lastPathComponent)", recentItems.path)
             count += 1
         }
         let sfl = HOME.appendingPathComponent("Library/Application Support/com.apple.sharedfilelist")
         for f in Helpers.contents(sfl) where f.lastPathComponent.contains(".sfl") {
             if count >= limit { break }
-            s.add("Elenco presente: \(f.lastPathComponent)", f.path)
+            s.add("List present: \(f.lastPathComponent)", f.path)
             count += 1
         }
         let prefsDir = HOME.appendingPathComponent("Library/Preferences")
@@ -187,26 +187,26 @@ enum ScanEngine {
             guard let dict = Helpers.readPlist(pref) else { continue }
             let rec = (dict["NSRecentDocumentRecords"] as? [Any]) ?? (dict["recentFiles"] as? [Any])
             if let rec = rec, !rec.isEmpty {
-                s.add("\(pref.deletingPathExtension().lastPathComponent): \(rec.count) documenti recenti",
+                s.add("\(pref.deletingPathExtension().lastPathComponent): \(rec.count) recent documents",
                       pref.path)
                 shown += 1
             }
         }
-        if s.items.isEmpty { s.error = "Nessuna lista di documenti recenti leggibile." }
+        if s.items.isEmpty { s.error = "No readable recent-documents list." }
         return s
     }
 
     // MARK: Downloads
 
     static func downloads(_ limit: Int) -> ScanSection {
-        var s = ScanSection(title: "Download recenti", sensitivity: .media,
+        var s = ScanSection(title: "Recent downloads", sensitivity: .medium,
                             icon: "arrow.down.circle",
-                            note: "File scaricati (spesso rivelano acquisti, documenti, allegati).")
+                            note: "Downloaded files (often reveal purchases, documents, attachments).")
         let d = HOME.appendingPathComponent("Downloads")
-        guard Helpers.isDir(d) else { s.error = "Cartella Downloads non trovata."; return s }
+        guard Helpers.isDir(d) else { s.error = "Downloads folder not found."; return s }
         let files = Helpers.contents(d)
         guard !files.isEmpty || Helpers.exists(d) else {
-            s.error = "Accesso negato alla cartella Downloads."; return s
+            s.error = "Access denied to the Downloads folder."; return s
         }
         let sorted = files.sorted {
             mtime($0) > mtime($1)
@@ -216,18 +216,18 @@ enum ScanEngine {
             let size = Helpers.pathSize(f)
             s.add(f.lastPathComponent, "\(when)  \(size / 1024) KB")
         }
-        s.add("Totale elementi nella cartella: \(files.count)")
+        s.add("Total items in the folder: \(files.count)")
         return s
     }
 
     // MARK: Credentials
 
     static func credentials(_ limit: Int, full: Bool) -> ScanSection {
-        var s = ScanSection(title: "Credenziali e chiavi in chiaro", sensitivity: .alta,
-                            icon: "key", note: "File di configurazione che tipicamente contengono segreti.")
+        var s = ScanSection(title: "Plaintext credentials and keys", sensitivity: .high,
+                            icon: "key", note: "Configuration files that typically contain secrets.")
         let targets: [(String, URL)] = [
             ("~/.aws/credentials", HOME.appendingPathComponent(".aws/credentials")),
-            ("~/.ssh (chiavi private)", HOME.appendingPathComponent(".ssh")),
+            ("~/.ssh (private keys)", HOME.appendingPathComponent(".ssh")),
             ("~/.netrc", HOME.appendingPathComponent(".netrc")),
             ("~/.docker/config.json", HOME.appendingPathComponent(".docker/config.json")),
             ("~/.npmrc", HOME.appendingPathComponent(".npmrc")),
@@ -243,12 +243,12 @@ enum ScanEngine {
             if Helpers.isDir(path) { // ~/.ssh
                 for k in Helpers.contents(path)
                 where k.lastPathComponent.hasPrefix("id_") && k.pathExtension != "pub" {
-                    s.add("\(label): \(k.lastPathComponent)", "chiave privata SSH presente")
+                    s.add("\(label): \(k.lastPathComponent)", "SSH private key present")
                 }
                 continue
             }
             guard let text = try? String(contentsOf: path, encoding: .utf8) else {
-                s.add("\(label): presente (non leggibile)", path.path); continue
+                s.add("\(label): present (not readable)", path.path); continue
             }
             var hits = 0
             for line in text.components(separatedBy: .newlines) where matches(secretRe, line) {
@@ -267,7 +267,7 @@ enum ScanEngine {
                     s.add("\(label): ⚠︎ \(shown)")
                 }
             }
-            if hits > 0 { s.add("\(label): \(hits) righe sensibili totali", path.path) }
+            if hits > 0 { s.add("\(label): \(hits) sensitive lines in total", path.path) }
         }
         // shallow .env scan in ~/<proj> and ~/<proj>/<sub>
         var envFound = 0
@@ -275,55 +275,55 @@ enum ScanEngine {
             if envFound >= limit { break }
             let env = child.appendingPathComponent(".env")
             if Helpers.exists(env) {
-                s.add("File .env di progetto: \(env.path)", "potenziali segreti d'ambiente")
+                s.add("Project .env file: \(env.path)", "potential environment secrets")
                 envFound += 1
             }
             for sub in Helpers.contents(child) where Helpers.isDir(sub) {
                 if envFound >= limit { break }
                 let env2 = sub.appendingPathComponent(".env")
                 if Helpers.exists(env2) {
-                    s.add("File .env di progetto: \(env2.path)", "potenziali segreti d'ambiente")
+                    s.add("Project .env file: \(env2.path)", "potential environment secrets")
                     envFound += 1
                 }
             }
         }
-        if s.items.isEmpty { s.error = "Nessun file di credenziali comune trovato." }
+        if s.items.isEmpty { s.error = "No common credential file found." }
         return s
     }
 
     // MARK: Wi-Fi
 
     static func wifi(_ limit: Int) -> ScanSection {
-        var s = ScanSection(title: "Reti Wi-Fi conosciute", sensitivity: .media,
-                            icon: "wifi", note: "Le reti salvate rivelano luoghi frequentati (casa, lavoro, viaggi).")
+        var s = ScanSection(title: "Known Wi-Fi networks", sensitivity: .medium,
+                            icon: "wifi", note: "Saved networks reveal places you frequent (home, work, travel).")
         let out = Helpers.runCommand("/usr/sbin/networksetup",
                                      ["-listpreferredwirelessnetworks", "en0"])
         let lines = out.components(separatedBy: .newlines)
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty && !$0.hasPrefix("Preferred") }
         for ln in lines.prefix(limit) { s.add(ln) }
-        if !lines.isEmpty { s.add("Totale reti preferite: \(lines.count)") }
-        if s.items.isEmpty { s.error = "Elenco reti non disponibile (interfaccia diversa da en0?)." }
+        if !lines.isEmpty { s.add("Total preferred networks: \(lines.count)") }
+        if s.items.isEmpty { s.error = "Network list unavailable (interface other than en0?)." }
         return s
     }
 
     // MARK: Privacy artifacts
 
     static func privacyArtifacts(_ limit: Int) -> ScanSection {
-        var s = ScanSection(title: "Vari artefatti di privacy", sensitivity: .bassa,
-                            icon: "shippingbox", note: "Tracce residue che spesso restano sul sistema.")
+        var s = ScanSection(title: "Assorted privacy artifacts", sensitivity: .low,
+                            icon: "shippingbox", note: "Residual traces that often linger on the system.")
         let checks: [(String, String)] = [
             ("Quick Look thumbnails", "Library/Caches/com.apple.QuickLook.thumbnailcache"),
-            ("Cache Spotlight recenti", "Library/Metadata/CoreSpotlight"),
-            ("Messaggi (Messages) DB", "Library/Messages/chat.db"),
-            ("Mail scaricata", "Library/Mail"),
-            ("Note (NoteStore)", "Library/Group Containers/group.com.apple.notes/NoteStore.sqlite"),
-            ("Calendario", "Library/Calendars"),
-            ("Appunti/Clipboard history (se app)", "Library/Application Support"),
+            ("Recent Spotlight cache", "Library/Metadata/CoreSpotlight"),
+            ("Messages DB", "Library/Messages/chat.db"),
+            ("Downloaded Mail", "Library/Mail"),
+            ("Notes (NoteStore)", "Library/Group Containers/group.com.apple.notes/NoteStore.sqlite"),
+            ("Calendar", "Library/Calendars"),
+            ("Clipboard history (if any app)", "Library/Application Support"),
         ]
         for (label, rel) in checks {
             let p = HOME.appendingPathComponent(rel)
-            if Helpers.exists(p) { s.add("\(label): presente", p.path) }
+            if Helpers.exists(p) { s.add("\(label): present", p.path) }
         }
         return s
     }
@@ -331,18 +331,18 @@ enum ScanEngine {
     // MARK: Orphan app data
 
     static func orphanAppData(_ limit: Int) -> ScanSection {
-        var s = ScanSection(title: "Residui di app disinstallate", sensitivity: .media,
+        var s = ScanSection(title: "Leftovers of uninstalled apps", sensitivity: .medium,
                             icon: "app.badge",
-                            note: "Dati in ~/Library che sembrano appartenere ad app non più installate. 'alta' = quasi certo (bundle id); 'bassa' = da verificare (match per nome).")
+                            note: "Data in ~/Library that seems to belong to apps no longer installed. 'high' = almost certain (bundle id); 'low' = needs checking (name match).")
         let orphans = OrphanFinder.find(cap: limit * 4)
-        if orphans.isEmpty { s.error = "Nessun residuo evidente trovato."; return s }
-        let high = orphans.filter { $0.confidence == .alta }.prefix(limit)
-        let low = orphans.filter { $0.confidence == .bassa }.prefix(limit)
+        if orphans.isEmpty { s.error = "No obvious leftovers found."; return s }
+        let high = orphans.filter { $0.confidence == .high }.prefix(limit)
+        let low = orphans.filter { $0.confidence == .low }.prefix(limit)
         for o in Array(high) + Array(low) {
             s.add("[\(o.confidence.rawValue)] \(o.ident)  (\(Helpers.humanSize(o.size)))",
                   "\(o.location): \(o.path.path)")
         }
-        s.add("(mostrati i più grandi; usa la Pulizia per rimuovere quelli ad alta confidenza)")
+        s.add("(largest shown; use Cleanup to remove the high-confidence ones)")
         return s
     }
 

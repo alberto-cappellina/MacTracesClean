@@ -32,7 +32,7 @@ enum InventoryEngine {
         if let kind = kind {
             k = kind
         } else if dir {
-            k = "Cartella"
+            k = "Folder"
         } else {
             let ext = url.pathExtension
             k = ext.isEmpty ? "File" : ext.uppercased()
@@ -45,14 +45,14 @@ enum InventoryEngine {
         var out: [InventoryItem] = []
         if cfg.browserTargets.contains("safari") {
             let db = HOME.appendingPathComponent("Library/Safari/History.db")
-            if Helpers.exists(db) { out.append(item(db, kind: "Database Safari")) }
+            if Helpers.exists(db) { out.append(item(db, kind: "Safari database")) }
         }
         if cfg.browserTargets.contains("chromium") {
             for base in BrowserPaths.chromiumBases {
                 let root = HOME.appendingPathComponent(base.rel)
                 guard Helpers.isDir(root) else { continue }
                 for (_, hist) in BrowserPaths.historyFiles(in: root) {
-                    out.append(item(hist, kind: "Database \(base.name)"))
+                    out.append(item(hist, kind: "\(base.name) database"))
                 }
             }
         }
@@ -61,7 +61,7 @@ enum InventoryEngine {
             if Helpers.isDir(base) {
                 for profile in Helpers.contents(base) where Helpers.isDir(profile) {
                     let places = profile.appendingPathComponent("places.sqlite")
-                    if Helpers.exists(places) { out.append(item(places, kind: "Database Firefox")) }
+                    if Helpers.exists(places) { out.append(item(places, kind: "Firefox database")) }
                 }
             }
         }
@@ -72,7 +72,7 @@ enum InventoryEngine {
         var out: [InventoryItem] = []
         for name in [".zsh_history", ".bash_history"] {
             let f = HOME.appendingPathComponent(name)
-            if Helpers.exists(f) { out.append(item(f, kind: "Cronologia shell")) }
+            if Helpers.exists(f) { out.append(item(f, kind: "Shell history")) }
         }
         return out
     }
@@ -115,7 +115,7 @@ enum InventoryEngine {
 
     private static func orphans() -> [InventoryItem] {
         OrphanFinder.find(cap: 1000)
-            .filter { $0.confidence == .alta }
+            .filter { $0.confidence == .high }
             .map { item($0.path, size: $0.size) }
     }
 }

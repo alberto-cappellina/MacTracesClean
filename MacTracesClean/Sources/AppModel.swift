@@ -33,7 +33,7 @@ final class AppModel: ObservableObject {
     @Published var cleanGeneration = 0
 
     var highCount: Int {
-        sections.filter { $0.sensitivity == .alta && !$0.items.isEmpty }.count
+        sections.filter { $0.sensitivity == .high && !$0.items.isEmpty }.count
     }
     var totalFindings: Int {
         sections.reduce(0) { $0 + $1.items.count }
