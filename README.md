@@ -1,45 +1,59 @@
 # MacTracesClean
 
-Utility di privacy **locale** per macOS: ti mostra in **sola lettura** cosa hai
-lasciato esposto sul tuo Mac (cronologie, credenziali in chiaro, reti Wi-Fi,
-residui di app disinstallate…) e, opzionalmente, ripulisce le tracce. Nessun
-dato lascia la macchina.
+A **local** privacy utility for macOS. It shows you, **read-only**, what you've
+left exposed on your Mac — browser histories, plaintext credentials, saved
+Wi-Fi networks, leftovers of uninstalled apps — and can optionally clean those
+traces away. No data ever leaves your machine.
 
-Il progetto ha due componenti che condividono lo stesso scopo:
+Native SwiftUI app, no external dependencies.
 
-## 1. `privacy_audit.py` — CLI Python
+## Features
 
-Scansione e pulizia da riga di comando, senza dipendenze esterne.
+**Privacy audit** (read-only, nothing leaves your Mac)
 
-```bash
-python3 privacy_audit.py                 # report a schermo (sola lettura)
-python3 privacy_audit.py --json out.json # salva anche un report JSON
-python3 privacy_audit.py --limit 5       # max 5 esempi per categoria
-python3 privacy_audit.py --full          # mostra i valori completi dei segreti
-```
+- Safari / Chromium (Chrome, Edge, Brave, Arc) / Firefox history
+- Shell history, flagging commands that contain secrets
+- Recently opened documents and recent downloads
+- Plaintext credentials and keys (`~/.aws`, `~/.ssh`, `.env`, …) — values masked
+- Known Wi-Fi networks
+- Leftovers of uninstalled apps under `~/Library`
+- Assorted privacy artifacts (Quick Look, Spotlight, Messages, Mail, Notes…)
 
-La pulizia è guidata da `config.json` ed è in **dry-run** finché non passi
-`--apply`. I file vengono spostati nel Cestino (recuperabili); le credenziali
-non vengono mai toccate automaticamente.
+**Trace cleanup** (dry-run by default, optional backup, files sent to Trash)
 
-## 2. `MacTracesClean/` — app macOS nativa (SwiftUI)
+- Browser history · Shell history (secrets only or all) · Quick Look cache
+- Downloads older than N days · Leftovers of uninstalled apps (high-confidence only)
+- Credentials are **never** touched automatically.
 
-Versione con interfaccia grafica dello script. Vedi
-[MacTracesClean/README.md](MacTracesClean/README.md) per build e dettagli.
+## Build & run
 
 ```bash
 cd MacTracesClean
-./build.sh        # richiede XcodeGen: brew install xcodegen
+./build.sh        # requires XcodeGen: brew install xcodegen
 ```
 
-## Sicurezza e privacy
+`build.sh` generates the Xcode project with XcodeGen, builds it with
+`xcodebuild`, and launches the app. The `.xcodeproj` is generated and is **not**
+checked in — regenerate it with `./build.sh` (or `xcodegen generate`) before
+opening it in Xcode.
 
-- Analisi in sola lettura, nessun dato esce dal Mac.
-- Pulizia in dry-run di default, con backup opzionale e rimozione nel Cestino.
-- I database SQLite dei browser vengono letti su una copia temporanea in sola
-  lettura, per non interferire con l'app aperta.
-- Per leggere Safari, Mail, Messaggi ecc. serve **Full Disk Access**.
+See [MacTracesClean/README.md](MacTracesClean/README.md) for more detail.
 
-## Licenza
+## Full Disk Access
 
-Distribuito sotto licenza [MIT](LICENSE).
+To read Safari, Mail, Messages and similar sources, add **MacTracesClean** under
+System Settings › Privacy & Security › **Full Disk Access**, then relaunch the
+app. Without this permission the related sections stay empty; the app flags this
+and offers a button to open the settings.
+
+## Security & privacy
+
+- Analysis is read-only; no data leaves the Mac.
+- Cleanup is dry-run by default, with optional backup and removal to the Trash.
+- Browser SQLite databases are read from a temporary read-only copy, so the app
+  never interferes with a running browser.
+- Not sandboxed (required to read `~/Library`).
+
+## License
+
+Released under the [MIT](LICENSE) license.

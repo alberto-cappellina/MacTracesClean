@@ -6,7 +6,7 @@ enum CleanEngine {
         let dryRun = !apply
         var backupRoot: URL? = nil
         if apply && cfg.backup {
-            let root = HOME.appendingPathComponent("privacy_audit_backups").appendingPathComponent(Helpers.stamp())
+            let root = HOME.appendingPathComponent("MacTracesClean_backups").appendingPathComponent(Helpers.stamp())
             try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
             backupRoot = root
         }

@@ -80,7 +80,7 @@ struct CleanView: View {
             Toggle(isOn: $model.backup) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Crea un backup prima di modificare").font(.subheadline.weight(.medium))
-                    Text("Copia i file in ~/privacy_audit_backups prima dell'esecuzione reale.")
+                    Text("Copia i file in ~/MacTracesClean_backups prima dell'esecuzione reale.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
