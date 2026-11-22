@@ -39,3 +39,7 @@ cd MacTracesClean
 - I database SQLite dei browser vengono letti su una copia temporanea in sola
   lettura, per non interferire con l'app aperta.
 - Per leggere Safari, Mail, Messaggi ecc. serve **Full Disk Access**.
+
+## Licenza
+
+Distribuito sotto licenza [MIT](LICENSE).
